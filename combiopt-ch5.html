@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<body>
+Edmonds [1965a] proved that also the maximum-weight matching problem can be
+solved in polynomial time. Equivalently, the minimum-weight perfect matching problem can be solved in polynomial time. It is the problem:
+(16) given: a graph G = (V, E) and a ‘weight’ function w : E → Q;
+find: a perfect matching M minimizing P
+e∈M w(e).
+We describe the algorithm, assuming without loss of generality that G has at least
+one perfect matching and that w(e) ≥ 0 for each edge e (we can add a constant to
+all edge weights without changing the problem).
+Like the cardinality matching algorithm, the weighted matching algorithm is based
+on shrinking sets of vertices. Unlike the cardinality matching algorithm however, for
+weighted matchings one has to ‘deshrink’ sets of vertices (the reverse operation of
+shrinking). Thus we have to keep track of the shrinking history throughout the
+iterations.
+The algorithm is ‘primal-dual’. The ‘vehicle’ carrying us to a minimum-weight
+perfect matching is a pair of a nested17 collection Ω of odd-size subsets of V , and a
+function π : Ω → Q satisfying:
+(17) (i) π(U) ≥ 0 if U ∈ Ω with |U| ≥ 3,
+(ii) X
+U∈Ω
+e∈δ(U)
+π(U) ≤ w(e) for each e ∈ E.
+This implies that for each perfect matching N in G one has w(N) ≥
+X
+U∈Ω
+π(U), since
+(18) w(N) = X
+e∈N
+w(e) ≥
+X
+e∈N
+X
+U∈Ω
+e∈δ(U)
+π(U) = X
+U∈Ω
+π(U)|N ∩ δ(U)| ≥ X
+U∈Ω
+π(U).
+Notation and assumptions. Let be given Ω and π : Ω → Q. Define
+17A collection Ω of subsets of a set V is called nested if U ∩ W = ∅ or U ⊆ W or W ⊆ U for any
+U, W ∈ Ω.
+86 Chapter 5. Nonbipartite matching
+(19) wπ(e) := w(e) −
+X
+U∈Ω
+e∈δ(U)
+π(U)
+for any edge e ∈ E. (So (17)(ii) implies wπ(e) ≥ 0.)
+G/Ω denotes the graph obtained from G by shrinking all sets in Ωmax, the set of
+inclusionwise maximal sets in Ω. We will assume throughout that {v} ∈ Ω for each
+v ∈ V . Hence, as Ω is nested and covers V , Ωmax is a partition of V .
+When shrinking a set U ∈ Ω, we denote the new vertex representing the shrunk
+set U just by U. So G/Ω has vertices the sets in Ωmax, with two distinct elements
+U, U′ ∈ Ω
+max adjacent if and only if G has an edge connecting U and U
+′
+. We denote
+any edge of G/Ω by the original edge in G.
+Throughout we restrict ourselves to Ω and π satisfying:
+(20) for each U ∈ Ω with |U| ≥ 3, the graph obtained from G|U by shrinking all
+inclusionwise maximal proper subsets of U that are in Ω, has a Hamiltonian
+circuit CU of edges e with wπ(e) = 0.
+X
+edge in M
+edge not in M
+vertex covered by M
+vertex not covered by M
+Figure 5.1. An M-alternating forest
+M-alternating forests. An important role in the algorithm is played by a so-called
+‘M-alternating forest’ relative to a matching M (cf. Figure 5.1).
+Let M be a matching in a graph G = (V, E) and let W be the set of vertices
+missed by M. Then a subset F of E is an M-alternating forest in G if F is a forest
+containing M such that each component of (V, F) consists either of an edge in M
+Section 5.3. Weighted matching algorithm 87
+or contains exactly one vertex in W and such that each path in F starting in W is
+M-alternating.
+The set of vertices v ∈ V for which there exists an even-length (odd-length,
+respectively) W − v path in F is denoted by even(F) (odd(F), respectively).
+The algorithm. We iterate with Ω and π : Ω → Q satisfying (17) and (20), a
+matching M in G/Ω and an M-alternating forest F in G/Ω with wπ(F) = 0.
+Initially, we set M := ∅, F := ∅, Ω := {{v} | v ∈ V }, and π({v}) := 0 for
+each v ∈ V . Then, as long as M is not a perfect matching in G/Ω, we perform the
+following iteratively:
+(21) Reset π(U) := π(U) − α for U ∈ odd(F) and π(U) := π(U) + α for U ∈
+even(F), where α is the largest value such that (17) is maintained. After
+that
+(i) there exists an edge e of G/Ω with wπ(e) = 0 such that e
+intersects even(F) but not odd(F),
+or (ii) there exists a U ∈ odd(F) with |U| ≥ 3 and π(U) = 0.
+First assume (i) holds. If only one end of e belongs to even(F), extend F
+by e. If both ends of e belong to even(F) and F ∪ {e} contains a circuitC,
+let U := V C and CU := C, add U to Ω (defining π(U) := 0), and replace F
+by F/U and M by M/U. If both ends of e belong to even(F) and F ∪ {e}
+contains an M-augmenting path, augment M and reset F := M.
+Next assume (ii) holds. Delete U from Ω, replace F by F ∪ P ∪ N and
+M by M ∪ N, where P is the even-length path in CU connecting the two
+edges of F incident with U and where N is the matching in CU covering all
+vertices in U that are not covered by M.
+(Note that in this iteration α is bounded, since P
+U∈Ω
+π(U) is bounded (by (18), as
+there is at least one perfect matching), and since |even(F)| > |odd(F)| (as M is not
+perfect).)
+If M is a perfect matching in G/Ω, we are done: by (20) we can expand M to a
+perfect matching N in G with wπ(N) = 0 and |N ∩δ(U)| = 1 for each U ∈ Ω; then N
+has equality throughout in (18), and hence it is a minimum-weight perfect matching.
+Theorem 5.5. There are at most |V |
+2
+iterations.
+Proof. In any iteration where we augment M, the value of |V (G/Ω)|−2|M| decreases
+by 2. If there is no matching augmentation, this value remains invariant. So there
+are at most 1
+2
+|V | matching augmentations.
+Let Veven be the set of vertices v ∈ V that are shrunk to a vertex in even(F).
+Let Ω0 be the set of vertices of G/Ω that do not belong to even(F). Then in any
+iteration with no matching augmentation, 2|Veven| + |Ω0| increases. Since this value
+cannot exceed 2|V |, between any two matching augmentations there are at most 2|V |
+88 Chapter 5. Nonbipartite matching
+iterations.
+This gives the theorem of Edmonds [1965a]:
+Corollary 5.5a. A minimum-weight perfect matching can be found in polynomial
+time.
+Proof. The nestedness of Ω implies that |Ω| ≤ 2|V | (which is an easy exercise — see
+Exercise 5.10). Hence each iteration can be performed in polynomial time. With any
+U ∈ Ω with |U| ≥ 3 we should keep the Hamiltonian circuit CU of (20) — which we
+had obtained earlier when shrinking U.
+As a consequence one can derive:
+Corollary 5.5b. In any graph with weight function on the edges, a maximum-weight
+matching can be found in polynomial time.
+Proof. Left to the reader. (Exercise 5.9.)
+The above algorithm can be implemented in time O(|V |
+3
+), which is a result of
+Gabow [1973] and Lawler [1976]. Faster algorithms were given by Galil, Micali, and
+Gabow [1986] (O(|E||V | log |V |)) and Gabow [1990] (O(|V ||E| + |V |
+2
+log |V |)).
+For more about matchings we refer to the book of Lov´asz and Plummer [1986].
+Application 5.3: Optimal pairing. In several practical situations one has to find an
+‘optimal pairing’, for example, when scheduling crews for airplanes. Also if one has to
+assign bus seats optimally to the participants of an organized tour, or to accommodate the
+participants most satisfactorily in two-bed hotel rooms, one has to solve a maximum-weight
+perfect matching problem.
+Application 5.4: Airline timetabling. A European airline company has for its European
+flights a number of airplanes available. Each plane can make on any day two return flights to
+European destinations (not necessarily the same destinations). The profit one makes on any
+flight depends on the departure and arrival times of the flight (also due to intercontinental
+connections). The company wants to make a timetable so that it can be performed by
+the available fleet and so that the total profit is maximized. Assume that the number of
+destinations to be reached is equal to twice the number of airplanes available.
+To solve this problem, consider the complete graph with vertex set all possible destinations. For each edge of this graph, connecting destinations B and C say, one calculates the
+profit that will be made if one and the same air plane will make its flights to B and C (in
+one order or the other). So one determines the optimum schedule for the flights to B and C
+so that the two return flights can be done by the same airplane and so that the total profit
+on the two flights is maximized.
+Now a timetable yielding maximum profit is found by determining a maximum-weight
+Section 5.3. Weighted matching algorithm 89
+perfect matching in this graph.
+Application 5.5: Chinese postman problem. The Chinese postman problem, first
+studied by Guan [1960], consists of the following. Given a connected graph G = (V, E) and
+a length function l : E → Q+, find a minimum-length tour T that traverses each edge at
+least once.
+It is not difficult to see that if each vertex of G has an even degree, then the optimal
+tour traverses each edge exactly once. But if the graph has vertices of odd degree, certain
+edges have to be traversed more than once. To find such edges we can proceed as follows.
+First determine the set U of vertices of odd degree. Note that |U| is even. For each pair
+u, u′ of vertices in U determine the distance d(u, u′
+) between u and u
+′
+in the graph G (taking
+l as length). Consider the complete graph H = (U, E′
+) on U. Determine a minimum-weight
+perfect matching M in H, taking d as weight function. For each edge uu′
+in M we can
+determine a path Pu,u′ in G of length d(u, u′
+). It can be shown that any two different such
+paths do not have any edge in common (assuming that each edge has positive length) —
+see Exercise 5.13. Let E˜ be the set of edges occurring in the Pu,u′ (uu′ ∈ M). Then there
+exists a tour T so that each edge e ∈ E \ E˜ is traversed exactly once and each edge e ∈ E˜ is
+traversed exactly twice. This tour T is a shortest ‘Chinese postman tour’ (Exercise 5.14).
+Application 5.6: Christofides’ approximative algorithm for the traveling salesman problem. Christofides [1976] designed the following algorithm to find a short traveling salesman tour in a graph (generally not the shortest however). The traveling salesman
+problem is the problem, given a finite set V and a ‘length’ function l : V × V → Q+, to find
+a shortest traveling salesman tour. A traveling salesman tour (or Hamiltonian circuit) is a
+circuit in the complete graph on V traversing each vertex exactly once.
+Suppose that the length function is symmetric (that is, l(u, v) = l(v, u) for all u, v ∈ V )
+and satisfies the triangle inequality:
+(22) l(u, w) ≤ l(u, v) + l(v, w)
+for all u, v, w ∈ V . Then a reasonably short traveling salesman tour can be found as follows.
+First determine a shortest spanning tree S (with the greedy algorithm). Next, let U be
+the set of vertices that have odd degree in S. Find a shortest perfect matching M on U,
+taking l as weight function. Now ES ∪ M forms a set of edges such that each vertex has
+even degree. (If an edge occurs both in ES and in M, we take it as two parallel edges.) So
+we can make a cycle T such that each edge in ES ∪ M is traversed exactly once. Then T
+traverses each vertex at least once. By inserting shortcuts we obtain a traveling salesman
+tour T
+′ with length(T
+′
+) ≤length(T).
+How far away is the length of T
+′
+from the length of a shortest traveling salesman tour?
+Let ρ be the length of a shortest traveling salesman tour. It is not difficult to show that:
+(23) (i) length(S) ≤ ρ;
+(ii) length(M) ≤
+1
+2
+ρ.
+(Exercise 5.18.) Hence
+90 Chapter 5. Nonbipartite matching
+(24) length(T
+′
+) ≤length(T) =length(S)+length(M) ≤
+3
+2
+ρ.
+So the tour obtained with Christofides’ algorithm is not longer than 3
+2
+times the optimal
+tour.
+The factor 3
+2
+seems quite large, but it is the smallest factor for which a polynomial-time
+method is known. Don’t forget moreover that it is a worst-case bound, and that in practice
+(or on average) the algorithm might have a much better performance.
+Exercises
+5.8. Find with the weighted matching algorithm a minimum-weight perfect matching in
+the following weighted graphs:
+(i)
+1
+1
+1
+3
+4
+2
+7
+5
+6
+(ii)
+0
+0
+0
+0
+1
+6
+0 5
+0
+1
+2
+4
+1
+8
+5
+6
+7
+3
+5.9. Derive Corollary 5.5b from Corollary 5.5a.
+5.10. A collection Ω of subsets of a finite set V is called cross-free if:
+(25) if X, Y ∈ Ω, then X ⊆ Y , or Y ⊆ X, or X ∩ Y = ∅, or X ∪ Y = V .
+Show that if Ω is cross-free, then |Ω| ≤ 4|V |.
+5.11. Find a shortest Chinese postman route in the graph in Figure 5.2.
+5.12. Find a shortest Chinese postman route in the map of Figure 5.3.
+5.13. Show that the paths found in the algorithm for the Chinese postman problem pairwise
+do not have any edge in common (if each edge has positive length).
+Section 5.4. The matching polytope 91
+2
+6
+5
+9
+4
+3
+1
+3
+2 1
+8
+3
+3
+3
+6
+2 3
+3
+3
+4
+5
+3
+4
+3
+4
+5
+3
+5
+4
+1
+2
+2
+Figure 5.2
+5.14. Show that the tour found in Application 5.5 is indeed a shortest Chinese postman
+tour.
+5.15. Apply Christofides’ algorithm to the table in Exercise 1.8.
+5.16. Let G = (V, E) be a graph and let T ⊆ V with |T| even. Call a subset F of E a
+T-join if T is equal to the set of vertices of odd degree in the graph (V, F).
+Derive from Corollary 5.5a that a minimum-weight T-join can be found in polynomial
+time.
+5.17. Let G = (V, E) be a graph and let l : E → Q be a length function such that each
+circuit has nonnegative length. Let s, t ∈ V .
+Derive from the minimum-weight perfect matching algorithm an algorithm to find a
+minimum-length s − t path in G.
+5.18. Show (23).
+5.4. The matching polytope
+The weighted matching algorithm of Edmonds [1965a] gives as a side result a characterization of the perfect matching polytope Pperfect matching(G) of any graph G. This
+is Edmonds’ matching polytope theorem.
+The perfect matching polytope of a graph G = (V, E), denoted by Pperfect matching(G),
+is the convex hull of the incidence vectors of the perfect matchings in G.
+18 That is,
+18For any finite set X and any subset Y of X, the incidence vector or incidence function of a
+subset Y of X is the vector χ
+Y ∈ R
+X defined by: χ
+Y
+x
+:= 1 if x ∈ Y and χ
+Y
+x
+:= 0 otherwise.
+92 Chapter 5. Nonbipartite matching
+Figure 5.3. Part of the Xuhui district of Shanghai
+(26) Pperfect matching(G) =conv.hull{χ
+M | M perfect matching in G}.
+So Pperfect matching(G) is a polytope in R
+E.
+In Section 3.6 we saw that for a bipartite graph G = (V, E), the perfect matching
+polytope is fully determined by the following set of inequalities:
+(27) (i) xe ≥ 0 for each e ∈ E;
+(ii) P
+e∋v
+xe = 1 for each v ∈ V .
+These inequalities are not enough for, say, K3: taking x(e) := 1
+2
+for each edge e of K3
+gives a vector x satisfying (27) but not belonging to the perfect matching polytope
+of K3.
+Edmonds [1965a] showed that it is enough to add the following set of inequalities:
+(28) X
+e∈δ(U)
+xe ≥ 1 for each odd subset U of V .
+It is clear that for any perfect matching M in G the incidence vector χ
+M satisfies
+(28). So clearly, Pperfect matching(G) is contained in the polyhedron Q defined by (27)
+and (28). The essence of Edmonds’ theorem is that one does not need more.
+In order to show Edmonds’ theorem, we derive from Edmonds’ algorithm the
+following theorem, where Podd(V ) denotes the collection of odd subsets of V :
+Theorem 5.6. Let G = (V, E) be a graph and let w : E → Q be a ‘weight’ function.
+Then the minimum weight of a perfect matching is equal to the m
+P
+aximum value of
+X∈Podd(V )
+π(X) where π ranges over all functions π : Podd(V ) → Q satisfying (17).
+Section 5.4. The matching polytope 93
+Proof. We may assume that w is nonnegative: if µ is the minimum value of w(e) over
+all edges e, decreasing each w(e) by µ decreases both the maximum and the minimum
+by 1
+2
+|V |µ.
+The fact that the minimum is not smaller than the maximum follows from (18).
+Equality follows from the fact that in the algorithm the final perfect matching and
+the final function π have equality throughout in (18).
+This implies:
+Corollary 5.6a (Edmonds’ perfect matching polytope theorem). The perfect matching polytope of any graph G = (V, E) is determined by (27) and (28).
+Proof. By Theorem 5.6 and LP-duality, for any weight function w ∈ QE, the minimum weight of a perfect matching is equal to the minimum of w
+T x taken over the
+polytope determined by (27) and (28). Hence the two polytopes coincide, by Theorem
+2.1.
+From this one can derive Edmonds’ matching polytope theorem, characterizing
+the matching polytope of a graph G = (V, E), denoted by Pmatching(G), which is the
+convex hull of the incidence vectors of the matchings in G. That is,
+(29) Pmatching(G) =conv.hull{χ
+M | M matching in G}.
+Again, Pmatching(G) is a polytope in R
+E.
+Corollary 5.6b (Edmonds’ matching polytope theorem). For any graph G = (V, E)
+the matching polytope is determined by:
+(30) (i) xe ≥ 0 for each e ∈ E;
+(ii) P
+e∋v
+xe ≤ 1 for each v ∈ V ;
+(iii) P
+e⊂U
+xe ≤ ⌊ 1
+2
+|U|⌋ for each U ⊆ V with |U| odd.
+Proof. Left to the reader (Exercise 5.21).
+This in turn has the following consequence:
+Corollary 5.6c. Let G = (V, E) be a graph and let w : E → Q+. Then the maximum
+weight of a matching is equal to the minimum value of
+(31) X
+v∈V
+yv +
+X
+U⊆V
+zU ⌊
+1
+2
+|U|⌋,
+94 Chapter 5. Nonbipartite matching
+where y ∈ QV
++ and z ∈ Q
+Podd(V )
++ satisfy P
+v∈e
+yv +
+P
+U∈Podd(V ),e⊆U
+zU ≥ w(e) for each
+edge e.
+Proof. Directly with LP-duality from Corollary 5.6b.
+In fact, Cunningham and Marsh’ theorem shows that if w is integer-valued, we
+can restrict y and z to integer vectors — see Section 5.5.
+</body>
+</html>
